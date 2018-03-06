@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="ISO-8859-1">
+        <script type="text/javascript" src="codebase/webix.js"></script>
+   		<link rel="stylesheet" type ="text/css" href="codebase/webix.css"></link>
+        <title>PCP APPLICATION</title>
+    </head>
+    <body>
+        <div id="mainContainer"></div>
+        
+        <script type="text/javascript">
+            
+            webix.ready(function(){
+                
+                webix.ui({
+                    container: "mainContainer",
+                    view: "datatable",
+                    id: "pcpdata_table",
+                    columns: [{id: "recepientId", header: "Recepient Id", width: 120, sort: "int"}, 
+                              {id: "startDate", header: "Start Date", width: 140, format:webix.Date.dateToStr("%m/%d/%y"), sort: "date"}, 
+                              {id: "endDate", header: "End Date", width: 140, format:webix.Date.dateToStr("%m/%d/%y"), sort: "date"}, 
+                              {id: "name", header: "Name", width: 120, sort: "string", template: "#firstName# #lastName#"}, 
+                              {id: "pcpnpi", header: "PCP NPI", width: 120, sort: "int", template: "#pcpNpi#"}, 
+                              {id: "dob", header: ["Date of Birth", {content:"dateFilter"}], format: webix.i18n.dateFormatStr, width: 120}, 
+                              {id: "address", header: "Address", width: 120, template: "#addressLine1# #addressLine2#"}, 
+                              {id: "city", header: ["City", {content:"selectFilter"}], width: 120}, 
+                              {id: "zipCode", header: ["zipCode", {content:"selectFilter"}], width: 120}],
+                    autoheight: true,
+                    autowidth: true,
+                    resizeRow: true,
+                    resizeColumn: true,
+                    math: true,
+                    pager: {
+                        template:"{common.prev()} {common.pages()} {common.next()}",
+                        container:"mainContainer",
+                        size:7,
+                        group:5
+				    },
+                    url: "http://localhost:8080/getEnrolledPopulation",
+                    onContext:{}
+                });
+                
+                 webix.locale.pager = {
+                    next: "Next",// the next button
+                    prev: "Prev",// the previous button
+                    first: "First",
+                    last: "Last"
+
+                };
+                $$("pcpdata_table").getPager().clone({
+                    template:"{common.first()} {common.prev()} {common.pages()} {common.next()} {common.last()}",
+                    container:"mainContainer",
+                    size:7,
+                    group:5
+                 });
+                webix.ui({
+                    view:"contextmenu",
+                    id: "contextMenu",
+                    autoheight: true,
+                    autowidth: true,
+                    data:[
+                            "Enrollment Trend By Recipient",
+                            { $template:"Separator" },
+                            "Active Member Count By Year"
+                        ],
+                    master:$$("pcpdata_table"),
+                    on:{
+					onItemClick:function(id){
+						
+                        if(this.getItem(id).value == "Enrollment Trend By Recipient"){
+                            var context = this.getContext();
+                            var list = context.obj;
+                            var listId = context.id;
+                            var recepientId = list.getItem(listId).recepientId;
+                            
+                            webix.ajax("http://localhost:8080/getEnrolledPopulationById", {"recepientId" : recepientId}).then(function(data){
+                               
+                                var recepientData = data.json();
+                                var chartData = getEnrollmentTrendData(recepientData);
+                                showEnrollmentTrendChart(chartData, recepientId);
+                            });
+                            
+                        } else if(this.getItem(id).value == "Active Member Count By Year"){
+                            
+                            webix.ajax("http://localhost:8080/getEnrolledPopulation").then(function(data){
+                               
+                                var activeMembers = data.json();
+                                showActiveMembersChart(activeMembers);
+                            });
+                        }
+					}
+				}
+            });
+               
+            function showEnrollmentTrendChart(chartData, recepientId){
+                
+                webix.ui({
+                    view: "window",
+                    id: "enrollmentTrendChart",
+                    width: 700,
+                    height: 400,
+                    head: {
+                        view: "toolbar",
+                        cols: [{
+                            view: "label",
+                            label: "Enrollment Trend for Recepient:" + recepientId
+                        }, {
+                            view: "button",
+                            value: "Close",
+                            click: "$$('enrollmentTrendChart').close();"
+                        }]
+                    },
+                    body: {
+                        view: "chart",
+                        type: "bar",
+                        value: "#count#",
+                        yAxis: {start: 0, step: 2, end: 12, title: "Months Active"},
+                        xAxis: {template: "#year#", title: "Year"},
+                        preset: "column",
+                        tooltip: { template: "#count# months"}, 
+                        data: chartData
+                    }
+                }).show();
+            }
+            function getEnrollmentTrendData(recepientData){
+                var chartData = [];
+                for(var i=0; i<recepientData.length; i++){
+                    var startDate = new Date(recepientData[i].startDate);
+                    var endDate = new Date(recepientData[i].endDate);
+                    var startYear = startDate.getFullYear();
+                    var endYear = endDate.getFullYear();
+                    var monthsActive = 0;
+                    if(startYear == endYear){
+                        monthsActive = endDate.getMonth() - startDate.getMonth();
+                        chartData = addData(startYear, monthsActive);
+                    } else{
+                        var yearCheckpoint = startYear;
+                        while(yearCheckpoint <= endYear){
+
+                            if(yearCheckpoint == startYear){
+                                monthsActive =  12 - (startDate.getMonth()+1);
+                            } else if(yearCheckpoint == endYear){
+                                monthsActive = endDate.getMonth()+1;
+                            } else{
+                                monthsActive = 12;
+                            }                                      
+                            chartData = addData(chartData, yearCheckpoint, monthsActive);
+                            yearCheckpoint++;
+                        }
+                    }
+                }
+                    return chartData;
+            }
+            
+            function showActiveMembersChart(activeMembers){
+                var chartData = getActiveMembersData(activeMembers);
+                webix.ui({
+                    view: "window",
+                    id: "activeMemberCountChart",
+                    width: 700,
+                    height: 400,
+                    head: {
+                        view: "toolbar",
+                        cols: [{
+                            view: "label",
+                            label: "Active Member Count By Year"
+                        }, {
+                            view: "button",
+                            value: "Close",
+                            click: "$$('activeMemberCountChart').close();"
+                        }]
+                    },
+                    body: {
+                        view: "chart",
+                        type: "spline",
+                        value: "#count#",
+                        yAxis: {start: 0, step: 2, end: 25, title: "Members"},
+                        xAxis: {template: "#year#", title: "Year"},
+                        tooltip: { template: "#count# members"}, 
+                        data: chartData
+                    }
+                }).show();
+            }
+            
+            function getActiveMembersData(activeMembers){
+                var chartData = [];
+                for(var i=0; i<activeMembers.length; i++){
+                    var startYear = new Date(activeMembers[i].startDate).getFullYear();
+                    var endYear = new Date(activeMembers[i].endDate).getFullYear();
+                    var yearIterator = startYear;
+                    while(yearIterator <= endYear){
+                        addData(chartData, yearIterator, 1);
+                        yearIterator++;
+                    }
+                }
+                return chartData;
+            }
+                
+            function addData(chartData, year, count){
+                if(chartData.length != 0){
+                    var yearAlreadyAdded = false;
+                    for(var i=0; i<chartData.length; i++){
+                            if(chartData[i].year == year){
+                                yearAlreadyAdded = true;
+                                chartData[i].count+=count;
+                            }
+                    }
+                    if(!yearAlreadyAdded){
+                        chartData.push({
+                            year: year,
+                            count: count
+                        });
+                    }
+                } else{
+                    chartData.push({
+                        year: year,
+                        count: count
+                    });
+                }
+                return chartData;
+            }
+         });   
+        </script>
+    </body>
+</html>
