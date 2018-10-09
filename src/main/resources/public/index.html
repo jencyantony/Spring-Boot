@@ -17,12 +17,12 @@
                     container: "mainContainer",
                     view: "datatable",
                     id: "pcpdata_table",
-                    columns: [{id: "recepientId", header: "Recepient Id", width: 120, sort: "int"}, 
+                    columns: [{id: "recepientId", header: ["Recepient Id", content: "textFilter"], width: 120, sort: "int"}, 
                               {id: "startDate", header: "Start Date", width: 140, format:webix.Date.dateToStr("%m/%d/%y"), sort: "date"}, 
                               {id: "endDate", header: "End Date", width: 140, format:webix.Date.dateToStr("%m/%d/%y"), sort: "date"}, 
                               {id: "name", header: "Name", width: 120, sort: "string", template: "#firstName# #lastName#"}, 
                               {id: "pcpnpi", header: "PCP NPI", width: 120, sort: "int", template: "#pcpNpi#"}, 
-                              {id: "dob", header: ["Date of Birth", {content:"dateFilter"}], format: webix.i18n.dateFormatStr, width: 120}, 
+                              {id: "dob", header: ["Date of Birth", {content:"dateFilter"}], width: 120, map: "(date)#dob#"}, 
                               {id: "address", header: "Address", width: 120, template: "#addressLine1# #addressLine2#"}, 
                               {id: "city", header: ["City", {content:"selectFilter"}], width: 120}, 
                               {id: "zipCode", header: ["zipCode", {content:"selectFilter"}], width: 120}],
@@ -139,7 +139,7 @@
                         while(yearCheckpoint <= endYear){
 
                             if(yearCheckpoint == startYear){
-                                monthsActive =  12 - (startDate.getMonth()+1);
+                                monthsActive = 12 - startDate.getMonth();
                             } else if(yearCheckpoint == endYear){
                                 monthsActive = endDate.getMonth()+1;
                             } else{
