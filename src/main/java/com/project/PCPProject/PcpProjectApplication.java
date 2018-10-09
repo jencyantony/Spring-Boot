@@ -7,9 +7,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
-@ComponentScan({"com.project.controller", "com.project.service"})
-@EntityScan("com.project.model")
-@EnableJpaRepositories("com.project.repository")
 public class PcpProjectApplication {
 
 	public static void main(String[] args) {
