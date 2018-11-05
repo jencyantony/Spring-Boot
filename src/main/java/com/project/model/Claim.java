@@ -19,7 +19,7 @@ public class Claim {
 	private int claimId;
 	
 	@Column(name= "recipient_id", updatable = false, unique = true, nullable = false)
-	private int recepientId;
+	private int recipientId;
 	
 	@Column(name= "notes", updatable = true, nullable = false)
 	private String notes;
@@ -48,11 +48,11 @@ public class Claim {
 	@Column(name= "claimSubmissionDate", updatable = true, nullable = false)
 	private Date claimSubmissionDate;
 	
-	public int getRecepientId() {
-		return recepientId;
+	public int getRecipientId() {
+		return recipientId;
 	}
-	public void setRecepientId(int recepientId) {
-		this.recepientId = recepientId;
+	public void setRecipientId(int recipientId) {
+		this.recipientId = recipientId;
 	}
 	public int getClaimId() {
 		return claimId;
