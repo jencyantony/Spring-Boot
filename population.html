@@ -9,7 +9,7 @@
 	<div id="populationTable"></div>
 	<script>
            webix.ready(function(){
-            webix.ajax("http://localhost:8080/PCPProject/getPopulation",function(population) {
+            webix.ajax("http://localhost:8080/PCPProject/getAllEnrolledPopulation",function(population) {
             populationJSONArray = JSON.parse(population); // to convert json string to JSON Array
             showPopulatonTable(populationJSONArray); // to display population table
             showPopulatonTableCmenu(populationJSONArray); // defines context menu on population table
@@ -17,7 +17,7 @@
         function showPopulatonTable(populationJSONArray) { // populationTable
             populationTable = new webix.ui({
                 view: "datatable", container: "populationTable", id: "populationTable",hover:"myhover",
-                columns: [  { id: "recepientId", header: ["Recepient Id", {content: "textFilter" }], width: 110,sort: "int"},
+                columns: [  { id: "recipientId", header: ["recipient Id", {content: "textFilter" }], width: 110,sort: "int"},
                             { map:"(date)#startDate#", header: ["Start Date", { content: "textFilter" }], width: 100, 
                                 sort:"date",format:webix.Date.dateToStr("%Y-%m-%d")},
                             { map:"(date)#endDate#", header: ["End Date", { content: "textFilter"}], width: 100,
@@ -39,19 +39,19 @@
         function showPopulatonTableCmenu(populationJSONArray) { // context menu on populationTable 
         	webix.ui({ 
                 view: "contextmenu", height:300,width:250, master : $$("populationTable"),
-                data: [ { value: "Enrollment Trend by Recepient",},
+                data: [ { value: "Enrollment Trend by Recipient",},
                         { value: "Active Member Count by Year",}
                       ],
                 click: function(id, context) {
                     var contextId = this.getContext().id;
-                    if (this.getItem(id).value == "Enrollment Trend by Recepient") {
+                    if (this.getItem(id).value == "Enrollment Trend by Recipient") {
                         var rowId = contextId.row; // gets the rowId on which the click is performed
                         var populationObj = this.getContext().obj; // gets the population object
-                        var recepientId = populationObj.getItem(rowId).recepientId; // get's recepient Id on which the right click is performed
-                        webix.ajax("http://localhost:8080/PCPProject/getPopulationById/"+recepientId).then(function(recepientData) {
-                            var recepientDataObj = recepientData.json()
-                            var chart1Data = getChart1Data(recepientDataObj); // gets of user enrolment trend by year 
-                            getChart1(chart1Data,recepientId) // bar chart function
+                        var recipientId = populationObj.getItem(rowId).recipientId; // get's recipient Id on which the right click is performed
+                        webix.ajax("http://localhost:8080/PCPProject/getEnrolledPopulationById?"+recipientId).then(function(recipientData) {
+                            var recipientDataObj = recipientData.json()
+                            var chart1Data = getChart1Data(recipientDataObj); // gets of user enrolment trend by year 
+                            getChart1(chart1Data,recipientId) // bar chart function
                         })
                     } else if (this.getItem(id).value == "Active Member Count by Year") {
                         var chart2Data = getChart2Data(populationJSONArray)
@@ -61,7 +61,7 @@
                     }
                 }
             })
-            function getChart1(chart1Data,recepientId) {
+            function getChart1(chart1Data,recipientId) {
                 var x=Math.floor((Math.random() * 500) + 100);
                 var y=Math.floor((Math.random() * 500) + 100);
                 return webix.ui({
@@ -75,7 +75,7 @@
                     top: y,
                     head: {
                         view: "toolbar",
-                        cols: [ { view: "label", label: "Enrollment Trend of Recepient "+recepientId },
+                        cols: [ { view: "label", label: "Enrollment Trend of Recipient "+recipientId },
                                 { view: "icon", icon: "times-circle",  click: "$$('chart1').close()" } 
                             ]
                     },
@@ -120,7 +120,7 @@
                         line: { color: "green", width: 3 },
                         xAxis: { template: "#year#", title: "Year" },
                         offset: 0,
-                        yAxis: { start: 0, end: 20, step: 2, title: "Members Enroled" },
+                        yAxis: { start: 0, end: 20, step: 2, title: "Members Enrolled" },
                         tooltip: { template: "#count# members" },
                         data: chart2Data
                     },
