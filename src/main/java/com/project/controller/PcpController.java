@@ -24,7 +24,7 @@ public class PcpController {
 	}
 	
 	@GetMapping(value= "/getEnrolledPopulationById")
-	public List<Population> getAllEnrolledPopulationById(@RequestParam("recepientId") int recepientId){
-		return pcpService.getEnrolledPopulationById(recepientId);
+	public List<Population> getEnrolledPopulationById(@RequestParam("recipientId") int recipientId){
+		return pcpService.getEnrolledPopulationById(recipientId);
 	}
 }
