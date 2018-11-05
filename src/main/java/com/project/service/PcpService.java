@@ -21,7 +21,7 @@ public class PcpService {
 		return enrolledPopulation;
 	}
 	
-	public List<Population> getEnrolledPopulationById(int recepientId){
-		return repository.findByRecepientId(recepientId);
+	public List<Population> getEnrolledPopulationById(int recipientId){
+		return repository.findByRecipientId(recipientId);
 	}
 }
