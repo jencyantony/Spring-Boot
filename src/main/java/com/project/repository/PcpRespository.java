@@ -10,5 +10,5 @@ import com.project.model.Population;
 @Repository
 public interface PcpRespository extends JpaRepository<Population, Integer>{
 
-	public List<Population> findByRecepientId(int rercepientId);
+	public List<Population> findByRecepientId(int recepientId);
 }
