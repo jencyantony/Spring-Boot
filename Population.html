@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+    <title>Primary care program enrollment application</title>
+    <script src="D:\Personal\Programming\webix.trial.complete\webix\codebase\webix.js" type="text/javascript" charset="utf-8"></script>
+    <link rel="stylesheet" href="D:\Personal\Programming\webix.trial.complete\webix\codebase\webix.css" type="text/css">
+<body>
+	<div id="populationTable"></div>
+	<script>
+           webix.ready(function(){
+            webix.ajax("http://localhost:8080/PCPProject/getPopulation",function(population) {
+            populationJSONArray = JSON.parse(population); // to convert json string to JSON Array
+            showPopulatonTable(populationJSONArray); // to display population table
+            showPopulatonTableCmenu(populationJSONArray); // defines context menu on population table
+        })
+        function showPopulatonTable(populationJSONArray) { // populationTable
+            populationTable = new webix.ui({
+                view: "datatable", container: "populationTable", id: "populationTable",hover:"myhover",
+                columns: [  { id: "recepientId", header: ["Recepient Id", {content: "textFilter" }], width: 110,sort: "int"},
+                            { map:"(date)#startDate#", header: ["Start Date", { content: "textFilter" }], width: 100, 
+                                sort:"date",format:webix.Date.dateToStr("%Y-%m-%d")},
+                            { map:"(date)#endDate#", header: ["End Date", { content: "textFilter"}], width: 100,
+                                sort: "date", format:webix.Date.dateToStr("%Y-%m-%d")},
+                            { header: ["Full Name", { content: "textFilter" }],template:"#firstName# #lastName#",width: 200, sort: "string" },
+                            { id: "pcpNpi", header: ["PCP NPI", { content: "textFilter" }], width: 100, sort: "int"},
+                            { map:"(date)#dob#", header: ["DOB", { content: "textFilter", }], width: 100, 
+                                sort: "date", format:webix.Date.dateToStr("%Y-%m-%d") },
+                            { header: ["Address", { content: "textFilter" }], template:"#addressLine1#, #addressLine2#, #city#, #state#, #zipCode#", width: 450, sort: "string" },
+                        ],
+                data: populationJSONArray, 
+                autowidth: true, autoheight: true, resizeColumn: true, resizeRow: true,
+                pager: { size: 10, container: "populationTable" }
+            });
+            populationTable.getPager().clone({ template: "{common.prev()} {common.pages()} {common.next()}",
+                                                container: "populationTable", size: 5, group: 3
+            });
+         }
+        function showPopulatonTableCmenu(populationJSONArray) { // context menu on populationTable 
+        	webix.ui({ 
+                view: "contextmenu", height:300,width:250, master : $$("populationTable"),
+                data: [ { value: "Enrollment Trend by Recepient",},
+                        { value: "Active Member Count by Year",},
+                        { value: "Info", message: "Kyyba's Work"}
+                ],
+                click: function(id, context) {
+                    var contextId = this.getContext().id;
+                    if (this.getItem(id).value == "Enrollment Trend by Recepient") {
+                        var rowId = contextId.row; // gets the rowId on which the click is performed
+                        var populationObj = this.getContext().obj; // gets the population object
+                        var recepientId = populationObj.getItem(rowId).recepientId; // get's recepient Id on which the right click is performed
+                        webix.ajax("http://localhost:8080/PCPProject/getPopulationById/"+recepientId).then(function(recepientDataString) {
+                            var recepientDataObj = recepientDataString.json()
+                            var chart1Data = getChart1Data(recepientDataObj); // gets of user enrolment trend by year 
+                            getChart1(chart1Data,recepientId) // bar chart function
+                        })
+                    } else if (this.getItem(id).value == "Active Member Count by Year") {
+                        var chart2Data = getChart2Data(populationJSONArray)
+                        getChart2(chart2Data);
+                    } else {
+                        webix.message("Invalid Option")
+                    }
+                }
+            })
+            function getChart1(chart1Data,recepientId) {
+
+                var x=Math.floor((Math.random() * 500) + 100);
+                var y=Math.floor((Math.random() * 500) + 100);
+                return webix.ui({
+                    view: "window",
+                    move: true,
+                    resize: true,
+                    id: "chart1",
+                    height: 300,
+                    width: 500,
+                    left: x,
+                    top: y,
+                    head: {
+                        view: "toolbar",
+                        cols: [ { view: "label", label: "Enrollment Trend of Recepient "+recepientId },
+                                { view: "icon", icon: "times-circle",  click: "$$('chart1').close()" } 
+                            ]
+                    },
+                    body: {
+                        view: "chart",
+                        type: "bar",
+                        value: "#count#",
+                        yAxis: {  start: 0, step: 2, end: 12, title: "Months Active" },
+                        xAxis: { template: "#year#", title: "Year" },
+                        preset: "column",
+                        data: chart1Data,
+                        tooltip: { template: "#count# Months" },
+                    },
+                    
+                }).show();
+            }
+            function getChart2(chart2Data) {
+                if($$('chart2')!=null){return null}
+                 var x=Math.floor((Math.random() * 500) + 100);
+                var y=Math.floor((Math.random() * 500) + 100);
+                webix.ui({
+                    view: "window",
+                    move: true,
+                    resize: true,
+                    id: "chart2",
+                    height: 300,
+                    width: 500,
+                    left: x,
+                    top: y,
+                    resize: true,
+                    head: {
+                        view: "toolbar",
+                        cols: [ { view: "label", label: "Active Member Count by Year "},
+                                { view: "icon", icon: "times-circle", click: "$$('chart2').close();" }
+                        ]
+                    },
+                    body: {
+                        view: "chart",
+                        type: "spline",
+                        value: "#count#",
+                        item: { borderColor: "#1293f8", color: "#ffffff" },
+                        line: { color: "green", width: 3 },
+                        xAxis: { template: "#year#", title: "Year" },
+                        offset: 0,
+                        yAxis: { start: 0, end: 20, step: 2, title: "Members Enroled" },
+                        tooltip: { template: "#count# members" },
+                        data: chart2Data
+                    },
+                    
+                }).show()
+            }
+        }
+        function getChart1Data(data) {
+            var chart1Data=[];
+				for(i=0;i<data.length;i++)
+					{
+					var startDate = new Date(data[i].startDate);
+					var endDate = new Date(data[i].endDate);
+					var startYear= startDate.getFullYear();
+					var endYear =endDate.getFullYear();
+					var year=startYear;					
+					while(year<=endYear)
+					{
+						var monthsCount=0;
+						if(startYear == endYear)
+						{
+							monthsCount = endDate.getMonth() - startDate.getMonth()+1;
+						}
+						else if(year == startYear)
+						{
+							monthsCount = 12 - startDate.getMonth(); 
+						}
+						else if(year == endYear)
+						{
+							monthsCount  = endDate.getMonth()+1;
+						}
+						else
+						{
+							monthsCount  = 12;
+						}
+						chart1Data.push({ year:year,
+							count:monthsCount							
+						});
+						year++
+					}
+				}	
+				return chart1Data
+        }
+           
+        function getChart2Data(data) { // returns an JSON arry of member count per year "between 2012 and 2018" (input for chart1))
+                var chart2Data=[];
+				var map=[];
+				for(i=0;i<data.length;i++)
+					{
+					var startDate = new Date(data[i].startDate);
+					var endDate = new Date(data[i].endDate);
+					var startYear= startDate.getFullYear();
+					var endYear =endDate.getFullYear();
+					var year=startYear;	
+					while(year<=endYear)
+						{
+							if(map.hasOwnProperty(year))
+							{  
+									var count=map[year]+1;
+									map[year]=count;
+								}
+							else
+							{
+								map[year]=1;
+								}
+						year++;
+						}
+					}
+					for(var key in map)
+					{
+						chart2Data.push({ year:key,
+							count:map[key]							
+						})
+					}
+				return chart2Data;
+        }
+       })
+    </script>
+</body>
+
+</html>
