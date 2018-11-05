@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
- <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+    <meta charset="UTF-8">
     <title>Primary care program enrollment application</title>
-    <script src="D:\Personal\Programming\webix.trial.complete\webix\codebase\webix.js" type="text/javascript" charset="utf-8"></script>
+    <script src="D:\Personal\Programming\webix.trial.complete\webix\codebase\webix.js" type="text/javascript"></script>
     <link rel="stylesheet" href="D:\Personal\Programming\webix.trial.complete\webix\codebase\webix.css" type="text/css">
 <body>
 	<div id="populationTable"></div>
@@ -40,17 +40,16 @@
         	webix.ui({ 
                 view: "contextmenu", height:300,width:250, master : $$("populationTable"),
                 data: [ { value: "Enrollment Trend by Recepient",},
-                        { value: "Active Member Count by Year",},
-                        { value: "Info", message: "Kyyba's Work"}
-                ],
+                        { value: "Active Member Count by Year",}
+                      ],
                 click: function(id, context) {
                     var contextId = this.getContext().id;
                     if (this.getItem(id).value == "Enrollment Trend by Recepient") {
                         var rowId = contextId.row; // gets the rowId on which the click is performed
                         var populationObj = this.getContext().obj; // gets the population object
                         var recepientId = populationObj.getItem(rowId).recepientId; // get's recepient Id on which the right click is performed
-                        webix.ajax("http://localhost:8080/PCPProject/getPopulationById/"+recepientId).then(function(recepientDataString) {
-                            var recepientDataObj = recepientDataString.json()
+                        webix.ajax("http://localhost:8080/PCPProject/getPopulationById/"+recepientId).then(function(recepientData) {
+                            var recepientDataObj = recepientData.json()
                             var chart1Data = getChart1Data(recepientDataObj); // gets of user enrolment trend by year 
                             getChart1(chart1Data,recepientId) // bar chart function
                         })
@@ -63,7 +62,6 @@
                 }
             })
             function getChart1(chart1Data,recepientId) {
-
                 var x=Math.floor((Math.random() * 500) + 100);
                 var y=Math.floor((Math.random() * 500) + 100);
                 return webix.ui({
@@ -202,5 +200,4 @@
        })
     </script>
 </body>
-
 </html>
