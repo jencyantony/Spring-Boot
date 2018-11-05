@@ -18,8 +18,8 @@ public class Population {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private int populationId;
 	
-	@Column(name= "recepient_Id", updatable = false, nullable = false)
-	private int recepientId;
+	@Column(name= "recipient_Id", updatable = false, nullable = false)
+	private int recipientId;
 
 	@Column(name= "first_name", updatable = true, nullable = false)
 	private String firstName;
@@ -68,12 +68,12 @@ public class Population {
 		this.populationId = populationId;
 	}
 
-	public int getRecepientId() {
-		return recepientId;
+	public int getRecipientId() {
+		return recipientId;
 	}
 
-	public void setRecepientId(int recepientId) {
-		this.recepientId = recepientId;
+	public void setRecipientId(int recipientId) {
+		this.recipientId = recipientId;
 	}
 
 	public String getFirstName() {
